@@ -1,4 +1,5 @@
 // ✅ Final Frontend with Refresh Button
+import { fetchEmails, refreshEmails } from "./api/emailService";
 
 import { useEffect, useState } from "react";
 import axios from "axios";
