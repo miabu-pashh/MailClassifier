@@ -12,7 +12,8 @@ function App() {
 
   const fetchEmails = () => {
     axios
-      .get("http://localhost:8080/emails")
+      .get("https://mail-classifier-backend.onrender.com/emails")
+
       .then((res) => {
         setEmailsByDay(res.data);
         const days = Object.keys(res.data);
@@ -27,7 +28,7 @@ function App() {
 
   const handleRefresh = () => {
     axios
-      .get("http://localhost:8080/refresh")
+      .get("https://mail-classifier-backend.onrender.com/refresh")
       .then(() => fetchEmails())
       .catch(console.error);
   };
