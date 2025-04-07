@@ -1,6 +1,4 @@
-// ✅ Final Frontend with Refresh Button
-import { fetchEmails, refreshEmails } from "./api/emailService";
-
+// ✅ Updated App.js to match the smarter backend
 import { useEffect, useState } from "react";
 import axios from "axios";
 import "./App.css";
@@ -10,11 +8,11 @@ function App() {
   const [selectedDay, setSelectedDay] = useState("");
   const [search, setSearch] = useState("");
   const [expandedIndex, setExpandedIndex] = useState(null);
+  const [companies, setCompanies] = useState([]);
 
   const fetchEmails = () => {
     axios
       .get("https://mail-classifier-backend.onrender.com/emails")
-
       .then((res) => {
         setEmailsByDay(res.data);
         const days = Object.keys(res.data);
@@ -23,14 +21,25 @@ function App() {
       .catch(console.error);
   };
 
+  const fetchCompanies = () => {
+    axios
+      .get("https://mail-classifier-backend.onrender.com/companies")
+      .then((res) => setCompanies(res.data.companies))
+      .catch(console.error);
+  };
+
   useEffect(() => {
     fetchEmails();
+    fetchCompanies();
   }, []);
 
   const handleRefresh = () => {
     axios
       .get("https://mail-classifier-backend.onrender.com/refresh")
-      .then(() => fetchEmails())
+      .then(() => {
+        fetchEmails();
+        fetchCompanies();
+      })
       .catch(console.error);
   };
 
@@ -40,8 +49,16 @@ function App() {
       email.from.toLowerCase().includes(search.toLowerCase())
   );
 
-  const categories = ["Rejection", "Interview", "LinkedIn", "Uncategorized"];
+  const categories = [
+    "Applied",
+    "Rejection",
+    "Interview",
+    "LinkedIn",
+    "Uncategorized",
+  ];
+
   const icons = {
+    Applied: "✅",
     Rejection: "❌",
     Interview: "🗓️",
     LinkedIn: "🔗",
@@ -55,7 +72,7 @@ function App() {
     return acc;
   }, {});
 
-  const appliedCount = filteredEmails.length;
+  const appliedCount = countByCategory.Applied || 0;
 
   return (
     <div className="app-container">
@@ -112,6 +129,10 @@ function App() {
           <div className="card-title">LinkedIn</div>
           <div className="card-count">{countByCategory.LinkedIn}</div>
         </div>
+        <div className="card companies">
+          <div className="card-title">Companies</div>
+          <div className="card-count">{companies.length}</div>
+        </div>
       </div>
 
       <div className="email-lists">
@@ -139,8 +160,7 @@ function App() {
                     <div className="email-date">{e.date}</div>
                     {idx === expandedIndex && (
                       <div className="email-body">
-                        Full email content can be shown here or a summary
-                        placeholder.
+                        Email from: {e.company || "Unknown"}
                       </div>
                     )}
                   </div>
