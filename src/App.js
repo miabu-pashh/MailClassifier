@@ -1,4 +1,5 @@
-// ✅ Updated App.js to match the smarter backend
+// ✅ Updated Frontend for Intelligent Mail Classifier
+
 import { useEffect, useState } from "react";
 import axios from "axios";
 import "./App.css";
@@ -10,22 +11,36 @@ function App() {
   const [expandedIndex, setExpandedIndex] = useState(null);
   const [companies, setCompanies] = useState([]);
 
-  const fetchEmails = () => {
-    axios
-      .get("https://mail-classifier-backend.onrender.com/emails")
-      .then((res) => {
-        setEmailsByDay(res.data);
-        const days = Object.keys(res.data);
-        if (days.length > 0) setSelectedDay(days[0]);
-      })
-      .catch(console.error);
+  const API = "https://mail-classifier-backend.onrender.com";
+
+  const fetchEmails = async () => {
+    try {
+      const res = await axios.get(`${API}/emails`);
+      setEmailsByDay(res.data);
+      const days = Object.keys(res.data);
+      if (days.length > 0) setSelectedDay(days[0]);
+    } catch (err) {
+      console.error("Fetch Emails Error:", err.message);
+    }
   };
 
-  const fetchCompanies = () => {
-    axios
-      .get("https://mail-classifier-backend.onrender.com/companies")
-      .then((res) => setCompanies(res.data.companies))
-      .catch(console.error);
+  const fetchCompanies = async () => {
+    try {
+      const res = await axios.get(`${API}/companies`);
+      setCompanies(res.data);
+    } catch (err) {
+      console.error("Fetch Companies Error:", err.message);
+    }
+  };
+
+  const handleRefresh = async () => {
+    try {
+      await axios.get(`${API}/refresh`);
+      fetchEmails();
+      fetchCompanies();
+    } catch (err) {
+      console.error("Refresh Error:", err.message);
+    }
   };
 
   useEffect(() => {
@@ -33,32 +48,14 @@ function App() {
     fetchCompanies();
   }, []);
 
-  const handleRefresh = () => {
-    axios
-      .get("https://mail-classifier-backend.onrender.com/refresh")
-      .then(() => {
-        fetchEmails();
-        fetchCompanies();
-      })
-      .catch(console.error);
-  };
-
   const filteredEmails = (emailsByDay[selectedDay] || []).filter(
     (email) =>
       email.subject.toLowerCase().includes(search.toLowerCase()) ||
       email.from.toLowerCase().includes(search.toLowerCase())
   );
 
-  const categories = [
-    "Applied",
-    "Rejection",
-    "Interview",
-    "LinkedIn",
-    "Uncategorized",
-  ];
-
+  const categories = ["Rejection", "Interview", "LinkedIn", "Uncategorized"];
   const icons = {
-    Applied: "✅",
     Rejection: "❌",
     Interview: "🗓️",
     LinkedIn: "🔗",
@@ -72,7 +69,8 @@ function App() {
     return acc;
   }, {});
 
-  const appliedCount = countByCategory.Applied || 0;
+  const appliedCount = filteredEmails.length;
+  const companyCount = companies.length;
 
   return (
     <div className="app-container">
@@ -129,9 +127,9 @@ function App() {
           <div className="card-title">LinkedIn</div>
           <div className="card-count">{countByCategory.LinkedIn}</div>
         </div>
-        <div className="card companies">
-          <div className="card-title">Companies</div>
-          <div className="card-count">{companies.length}</div>
+        <div className="card">
+          <div className="card-title">Unique Companies</div>
+          <div className="card-count">{companyCount}</div>
         </div>
       </div>
 
@@ -160,7 +158,8 @@ function App() {
                     <div className="email-date">{e.date}</div>
                     {idx === expandedIndex && (
                       <div className="email-body">
-                        Email from: {e.company || "Unknown"}
+                        Email content not shown in preview. (Backend only
+                        provides metadata)
                       </div>
                     )}
                   </div>
